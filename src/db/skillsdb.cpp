@@ -16,6 +16,7 @@ static Skillgrp_loader *_s_internal_skillgrp = NULL;
 SkillsDB *SkillsDB::_s_instance = NULL;
 
 
+
 SkillsDB *SkillsDB::getInstance() {
     if( !_s_instance ) {
         _s_instance = new SkillsDB();
@@ -127,10 +128,8 @@ bool SkillsDB::load( void *splashScreenPointer ) {
     _s_internal_skillgrp = new Skillgrp_loader();
     _s_internal_skillgrp->load();
     //
-    // current = V:/dev/l2/misc/SkillsInformer
     QDir skillsDir = QDir::current();
     skillsDir.cd( "data/skills" );
-    // qDebug( "skills dir: %s", skillsDir.absolutePath().toUtf8().data() ); // OK
     // list all *.xml files in subdirectory data/skills
     QStringList nameFilters;
     nameFilters << "*.xml";
@@ -139,16 +138,22 @@ bool SkillsDB::load( void *splashScreenPointer ) {
     int num_xmls_done = 0;
     int num_fs_skills = 0;
     QListIterator<QFileInfo> iter( fileList );
-    while( iter.hasNext() ) {
-        const QFileInfo& fileInfo = iter.next();
-        //qDebug( "file: %s", fileInfo.absoluteFilePath().toUtf8().data() );
-        this->loadSkillXML( fileInfo.absoluteFilePath() );
-        num_xmls_done++;
-        //if( num_xmls_done >= 1 )
-        //    break;
+    try {
+        while( iter.hasNext() ) {
+            const QFileInfo& fileInfo = iter.next();
+            this->loadSkillXML( fileInfo.absoluteFilePath() );
+            num_xmls_done++;
+        }
+        // load forgotten skill tree
+        num_fs_skills = this->loadForgottenSkillTree();
+    } catch( UnparsedSkillParameterException e ) {
+        qWarning( "PARSE ERROR: %s", e.toString().toUtf8().data() );
+    } catch( UnparsedSkillForParameterException e ) {
+        qWarning( "PARSE ERROR: %s", e.toString().toUtf8().data() );
+    } catch( UnparsedSkillAttributeException e ) {
+        qWarning( "PARSE ERROR: %s", e.toString().toUtf8().data() );
     }
-    // load forgotten skill tree
-    num_fs_skills = this->loadForgottenSkillTree();
+
     // remove skills icons loader from memory - all skills are loaded now
     delete _s_internal_skillgrp;
     _s_internal_skillgrp = NULL;
@@ -205,23 +210,75 @@ int SkillsDB::loadSkillXML( const QString& fileName ) {
 
 L2Skill SkillsDB::parseSkillDefinition( QXmlStreamReader& xml ) {
     // read current skill attributes (id, levels, name)
-    QXmlStreamAttributes attrs = xml.attributes();
-    int skillId       = attrs.value( "id" ).toInt();
-    int num_levels    = attrs.value( "levels" ).toInt();
-    QString skillName = attrs.value( "name" ).toString();
-    //qDebug( " SkillsDB: parsing skill %d (%s) levels=%d", skillId, skillName.toUtf8().data(), num_levels );
+    QVector<QXmlStreamAttribute> attrs = xml.attributes();
+    int skillId = 0;
+    int num_levels = 0;
+    QString skillName;
+    int num_enchants = 0;
+    QVectorIterator<QXmlStreamAttribute> sa_iter(attrs);
+    while( sa_iter.hasNext() ) {
+        QXmlStreamAttribute attr = sa_iter.next();
+        if( attr.name() == "id" ) {
+            skillId = attr.value().toInt();
+        } else if( attr.name() == "levels" ) {
+            num_levels = attr.value().toInt();
+        } else if( attr.name() == "name" ) {
+            skillName = attr.value().toString();
+        } else if( (attr.name() == "enchantGroup1") ||
+                   (attr.name() == "enchantGroup2") ||
+                   (attr.name() == "enchantGroup3") ||
+                   (attr.name() == "enchantGroup4") ||
+                   (attr.name() == "enchantGroup5") ||
+                   (attr.name() == "enchantGroup6") ||
+                   (attr.name() == "enchantGroup7") ||
+                   (attr.name() == "enchantGroup8") ) {
+            QString anames = attr.name().toString();
+            QString snum_enchants = anames.mid( 12 ); // only last numbers after word "enchantGroup"
+            int max_num_enchants = snum_enchants.toInt();
+            if( max_num_enchants > num_enchants )
+                num_enchants = max_num_enchants;
+        } else {
+            throw UnparsedSkillAttributeException( skillId, attr.name().toString(), xml.lineNumber() );
+        }
+    }
     xml.readNext();
     //
     L2Skill skill;
     skill.setSkillId( skillId );
     skill.setSkillName( skillName );
     skill.setNumLevels( num_levels );
+    skill.setNumEnchants( num_enchants );
     // read until the end of element named "skill"
     while( !((xml.tokenType() == QXmlStreamReader::EndElement) && (xml.name() == "skill")) ) {
-        if( xml.name() == "table" ) {
-            this->parseSkillTableDefinition( skill, xml );
-        } else if( xml.name() == "set" ) {
-            this->parseSkillSetDefinition( skill, xml );
+        if( xml.tokenType() == QXmlStreamReader::StartElement ) {
+            if( xml.name() == "table" ) {
+                this->parseSkillTableDefinition( skill, xml );
+            } else if( xml.name() == "set" ) {
+                this->parseSkillSetDefinition( skill, xml );
+            } else if( xml.name() == "cond" ) {
+                this->parseSkillCondDefinition( skill, xml );
+            } else if( (xml.name() == "enchant1") ||
+                       (xml.name() == "enchant2") ||
+                       (xml.name() == "enchant3") ||
+                       (xml.name() == "enchant4") ||
+                       (xml.name() == "enchant5") ||
+                       (xml.name() == "enchant6") ||
+                       (xml.name() == "enchant7") ||
+                       (xml.name() == "enchant8") ) {
+                this->parseSkillEnchantDefinition( skill, xml );
+            } else if( (xml.name() == "for") ||
+                       (xml.name() == "enchant1for") ||
+                       (xml.name() == "enchant2for") ||
+                       (xml.name() == "enchant3for") ||
+                       (xml.name() == "enchant4for") ||
+                       (xml.name() == "enchant5for") ||
+                       (xml.name() == "enchant6for") ||
+                       (xml.name() == "enchant7for") ||
+                       (xml.name() == "enchant8for") ) {
+                this->parseSkillForDefinition( skill, xml );
+            } else { // unknown element?
+                throw UnparsedSkillParameterException( skillId, xml );
+            }
         }
         // anyways, read next
         xml.readNext();
@@ -261,6 +318,227 @@ void SkillsDB::parseSkillSetDefinition( L2Skill& skill, QXmlStreamReader& xml ) 
         xml.readNext();
     }
     skill.addSet( setName, setValue );
+}
+
+
+void SkillsDB::parseSkillForDefinition( L2Skill& skill, QXmlStreamReader& xml ) {
+    QString kind = xml.name().toString(); // save current XML block token
+    //qDebug( "parsing 'for' kind = %s", kind.toUtf8().data() );
+    // goto next
+    xml.readNext();
+    while( !((xml.name() == kind) && (xml.tokenType() == QXmlStreamReader::EndElement)) ) {
+        //qDebug( "    token name=[%s], type=[%s]", xml.name().toUtf8().data(), xml.tokenString().toUtf8().data() );
+        if( xml.tokenType() == QXmlStreamReader::StartElement ) {
+            if( xml.name() == "effect" ) {
+                //qDebug( "        entered parsing effect" );
+                // <effect name="Buff" abnormalTime="300" val="0" abnormalLvl="1" abnormalType="possession">
+                // parse effect attributes
+                // known attributes:
+                QString effectName;
+                QString abnormalType;
+                int abnormalTime = 0;
+                int abnormalLvl = 0;
+                int effectVal = 0;
+                int self = 0;
+                int noicon = 0;
+                QString effectCount;
+                QString effectPower;
+                int abnormalVisualEffect = 0;
+                QString chanceType;
+                int triggeredId = 0;
+                L2SkillEffect eff;
+                //
+                QXmlStreamAttributes attrs = xml.attributes();
+                QVectorIterator<QXmlStreamAttribute> iter( attrs );
+                while( iter.hasNext() ) {
+                    QXmlStreamAttribute attr = iter.next();
+                    if( attr.name() == "name" ) {
+                        effectName = attr.value().toString();
+                        eff.setEffectName( effectName );
+                    } else if ( attr.name() == "abnormalType" ) {
+                        abnormalType = attr.value().toString();
+                        eff.setAbnormalType( abnormalType );
+                    } else if( attr.name() == "val" ) {
+                        effectVal = attr.value().toInt();
+                        eff.setEffectVal( effectVal );
+                    } else if( attr.name() == "abnormalTime" ) {
+                        abnormalTime = attr.value().toInt();
+                        eff.setAbnormalTime( abnormalTime );
+                    } else if( attr.name() == "abnormalLvl" ) {
+                        abnormalLvl = attr.value().toInt();
+                        eff.setAbnormalLvl( abnormalLvl );
+                    } else if( attr.name() == "self" ) {
+                        self = attr.value().toInt();
+                        eff.setSelf( self ? true : false );
+                    } else if( attr.name() == "noicon" ) {
+                        noicon = attr.value().toInt();
+                        eff.setNoicon( noicon ? true : false );
+                    } else if( attr.name() == "count" ) {
+                        effectCount = attr.value().toString();
+                        eff.setEffectCount( effectCount );
+                    } else if( attr.name() == "effectPower" ) {
+                        effectPower = attr.value().toString();
+                        eff.setEffectPower( effectPower );
+                    } else if( attr.name() == "abnormalVisualEffect" ) {
+                        abnormalVisualEffect = attr.value().toInt();
+                        eff.setAbnormalVisualEffect( abnormalVisualEffect );
+                    } else if( attr.name() == "triggeredId" ) {
+                        triggeredId = attr.value().toInt();
+                        eff.setTriggeredId( triggeredId );
+                    } else if( attr.name() == "triggeredLevel" ) {
+                        eff.setTriggeredLevel( attr.value().toString() );
+                    } else if( attr.name() == "chanceType" ) {
+                        chanceType = attr.value().toString();
+                        eff.setChanceType( chanceType );
+                    } else if( attr.name() == "special" ) {
+                        eff.setSpecial( attr.value().toString() );
+                    } else if( attr.name() == "activationChance" ) {
+                        eff.setActivationChance( attr.value().toString() );
+                    } else if( attr.name() == "activationMinDamage" ) {
+                        eff.setActivationMinDamage( attr.value().toString() );
+                    } else if( attr.name() == "activationSkills" ) {
+                        eff.setActivationSkills( attr.value().toString() );
+                    } else if( attr.name() == "event" ) {
+                        // rarely-used stuff, <skill id="22029" levels="1" name="Baguette Herb">
+                    } else { // unknown attribute ?
+                        throw UnparsedSkillAttributeException( skill.skillId(), attr.name().toString(), xml.lineNumber() );
+                    }
+                }
+                // only after attributes, go further
+                xml.readNext();
+                // parse effect stat modifiers
+                while( !((xml.name() == "effect") && (xml.tokenType() == QXmlStreamReader::EndElement)) ) {
+                    if( xml.tokenType() == QXmlStreamReader::StartElement ) {
+                        if( (xml.name() == "add") ||
+                            (xml.name() == "sub") ||
+                            (xml.name() == "mul") ||
+                            (xml.name() == "div") ||
+                            (xml.name() == "basemul") ||
+                            (xml.name() == "set") ||
+                            (xml.name() == "share") ) {
+                            this->parseSkillEffectStatMod( skill, eff, xml );
+                        } else {
+                            throw UnparsedSkillForParameterException( skill.skillId(), xml );
+                        }
+                    }
+                    xml.readNext();
+                }
+                // ended parsing effect
+                //qDebug( "parsed effect: %s", eff.toString().toUtf8().data() );
+                skill.addEffect( eff );
+            } else if( (xml.name() == "add") ||
+                       (xml.name() == "sub") ||
+                       (xml.name() == "mul") ||
+                       (xml.name() == "div") ||
+                       (xml.name() == "basemul") ||
+                       (xml.name() == "set") ||
+                       (xml.name() == "share") ) {
+                L2SkillEffect *pEffect = skill.defaultEffect();
+                this->parseSkillEffectStatMod( skill, *pEffect, xml );
+                //qDebug( "!!! DEFAULT effect: %s", pEffect->toString().toUtf8().data() );
+            } else {
+                xml.lineNumber();
+                throw UnparsedSkillForParameterException( skill.skillId(), xml );
+            }
+        }
+        xml.readNext();
+    }
+}
+
+
+void SkillsDB::parseSkillEffectStatMod( L2Skill& skill, L2SkillEffect& eff, QXmlStreamReader& xml ) {
+    L2SkillStatModifier mod;
+    QString op_name = xml.name().toString(); // add / sub / mul / div ?
+    //qDebug( "--parsing effect stat [%s]", op_name.toUtf8().data() );
+    mod.setOpS( op_name );
+    //
+    // <add order="0x40" stat="pAtk" val="129.3" /> // direct value
+    // <add order="0x40" stat="pAtk" val="#pAtk">   // table reference
+    //     <using kind="Sword,Big Sword,Blunt,Big Blunt" /> // sub-tag
+    // </add>
+    //
+    // parse attributes
+    QVector<QXmlStreamAttribute> attrs = xml.attributes();
+    QVectorIterator<QXmlStreamAttribute> iter( attrs );
+    while( iter.hasNext() ) {
+        QXmlStreamAttribute attr = iter.next();
+        if( attr.name() == "order" ) {
+            mod.setOrder( attr.value().toString() );
+        } else if( attr.name() == "stat" ) {
+            mod.setStat( attr.value().toString() );
+        } else if( attr.name() == "val" ) {
+            mod.setVal( attr.value().toString() );
+        } else {
+            throw UnparsedSkillAttributeException( skill.skillId(), attr.name().toString(), xml.lineNumber() );
+        }
+    }
+    eff.addStatMod( mod );
+    xml.readNext(); // goto next
+    // parse any sub-tags
+    bool in_not = false;
+    while( !((xml.name() == op_name) && (xml.tokenType() == QXmlStreamReader::EndElement)) ) {
+        if( xml.tokenType() == QXmlStreamReader::StartElement ) {
+            if( xml.name() == "using" ) {
+                QXmlStreamAttributes attrs = xml.attributes();
+                QString ukind;
+                if( attrs.hasAttribute("kind") ) {
+                    ukind = attrs.value("kind").toString();
+                    if( in_not )
+                        ukind = QString( "NOT %1" ).arg(ukind);
+                    eff.setUsingKind( ukind );
+                }
+            } else if( xml.name() == "not" ) {
+                in_not = true;
+            } else if( xml.name() == "player" ) {
+                // ignore ? player status condition, like:
+                // <skill id="148" levels="8" name="Vital Force"> ...
+                //  ... <player resting="true" />
+                // <player hp="60" /> (Frenzy)
+            } else if( (xml.name() == "and") || (xml.name() == "or") ) {
+                // ignore :( Frenzy
+                // <and>
+                //   <player hp="60" />
+                //   <using kind="Big Sword,Big Blunt" />
+                // </and>
+            } else if( xml.name() == "game" ) {
+                // game condition: Shadow Sense:
+                //    <game night="true" />
+            } else {
+                throw UnparsedSkillForParameterException( skill.skillId(), xml );
+            }
+        }
+        if( xml.tokenType() == QXmlStreamReader::EndElement ) {
+            if( xml.name() == "not" ) {
+                in_not = false;
+            }
+        }
+        xml.readNext();
+    }
+}
+
+
+void SkillsDB::parseSkillEnchantDefinition( L2Skill& skill, QXmlStreamReader& xml ) {
+    Q_UNUSED(skill);
+    QString kind = xml.name().toString();
+    xml.readNext();
+    while( !((xml.name() == kind) && (xml.tokenType() == QXmlStreamReader::EndElement)) ) {
+        //qDebug( "    token name=[%s], type=[%s]",
+        //        xml.name().toUtf8().data(),
+        //        xml.tokenString().toUtf8().data() );
+        xml.readNext();
+    }
+}
+
+
+void SkillsDB::parseSkillCondDefinition( L2Skill& skill, QXmlStreamReader& xml ) {
+    Q_UNUSED(skill);
+    xml.readNext();
+    while( !((xml.name() == "cond") && (xml.tokenType() == QXmlStreamReader::EndElement)) ) {
+        //qDebug( "    token name=[%s], type=[%s]",
+        //        xml.name().toUtf8().data(),
+        //        xml.tokenString().toUtf8().data() );
+        xml.readNext();
+    }
 }
 
 

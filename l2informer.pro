@@ -26,7 +26,9 @@ SOURCES += src/main.cpp \
     src/db/skillsdb.cpp \
     src/ui_utils.cpp \
     src/tab_search.cpp \
-    src/db/utils_db.cpp
+    src/db/utils_db.cpp \
+    src/models/l2skilleffect.cpp \
+    src/models/l2skillstatmodifier.cpp
 
 HEADERS  += \
     src/mainwindow.h \
@@ -42,7 +44,9 @@ HEADERS  += \
     src/db/skillsdb.h \
     src/ui_utils.h \
     src/tab_search.h \
-    src/db/utils_db.h
+    src/db/utils_db.h \
+    src/models/l2skilleffect.h \
+    src/models/l2skillstatmodifier.h
 
 FORMS    += \
     src/mainwindow.ui \

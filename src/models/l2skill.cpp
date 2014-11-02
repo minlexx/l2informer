@@ -4,11 +4,13 @@ L2Skill::L2Skill() {
     _skillId = -1;
     _skillName.clear();
     _levels = 0;
+    _num_enchants = 0;
     _iconName.clear();
     _forgottenScroll = false;
     //
     _sets.clear();
     _tables.clear();
+    _effects.clear();
 }
 
 L2Skill::L2Skill( const L2Skill& other ) {
@@ -22,12 +24,15 @@ const L2Skill& L2Skill::operator=( const L2Skill& other ) {
     _skillId = other._skillId;
     _skillName = other._skillName;
     _levels = other._levels;
+    _num_enchants = other._num_enchants;
     _iconName = other._iconName;
     _pixmap = other._pixmap;
     _forgottenScroll = other._forgottenScroll;
     //
     _sets = other._sets;
     _tables = other._tables;
+    _defaultEffect = other._defaultEffect;
+    _effects = other._effects;
     //
     return (*this);
 }
@@ -39,7 +44,7 @@ bool L2Skill::operator==( const L2Skill& other ) {
 
 
 QString L2Skill::toString() const {
-    QString ret = QString( "%1[ID=%2]" ).arg( _skillName ).arg( _skillId );
+    QString ret = QString( "%1 [ID=%2]" ).arg( _skillName ).arg( _skillId );
     return ret;
 }
 
@@ -80,6 +85,11 @@ void L2Skill::addSet( const QString& set_name, const QString& set_value ) {
 void L2Skill::addTable( const QString& table_name, const QString& table_value ) {
     L2SkillTable skill_table( table_name, table_value );
     _tables.insert( table_name, skill_table );
+}
+
+
+void L2Skill::addEffect( const L2SkillEffect& eff ) {
+    _effects.append( eff );
 }
 
 

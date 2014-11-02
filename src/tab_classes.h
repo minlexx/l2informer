@@ -21,9 +21,11 @@ public slots:
     void initView();
 
     void onTree_currentItemChanged( QTreeWidgetItem *current, QTreeWidgetItem *previous );
+    void onTreeSkill_itemPressed( QTreeWidgetItem *item, int column );
     void onCbMinLvlActivated( int index );
     void onCbMaxLvlActivated( int index );
     void onChk_hidePassive();
+    void onActionSkillInfo( bool checked );
 
 protected:
     void connectSignals();
