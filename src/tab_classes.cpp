@@ -14,6 +14,8 @@
 #include "db/skilltree.h"
 #include "db/skillsdb.h"
 
+#include "skillinfownd.h"
+
 
 Tab_Classes::Tab_Classes( QWidget *parent ): QWidget(parent), ui(new Ui::Tab_Classes) {
     ui->setupUi( this );
@@ -249,7 +251,7 @@ void Tab_Classes::onTreeSkill_itemPressed( QTreeWidgetItem *item, int column ) {
         if( ret ) {
             if( ret == a1 ) {
                 // launch skillinfo window
-                qDebug( "Launch skill info window for skill: %s", skill.toString().toUtf8().data() );
+                Launch_SkillInfoWnd( skill );
             } else if ( ret == a2 ) {
                 QString skillInfo = QString( "%1 ID = %2" ).arg( skill.skillName() ).arg( skillId );
                 QClipboard *clipboard = QApplication::clipboard();

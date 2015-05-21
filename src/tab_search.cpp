@@ -10,6 +10,7 @@
 #include "ui_tab_search.h"
 #include "ui_utils.h"
 #include "db/skillsdb.h"
+#include "skillinfownd.h"
 
 Tab_Search::Tab_Search( QWidget *parent ): QWidget( parent ), ui(new Ui::Tab_Search) {
     m_as_timer = new QTimer(this);
@@ -87,7 +88,7 @@ void Tab_Search::onTreeSkill_itemPressed( QTreeWidgetItem *item, int column ) {
         if( ret ) {
             if( ret == a1 ) {
                 // launch skillinfo window
-                qDebug( "Launch skill info window for skill: %s", skill.toString().toUtf8().data() );
+                Launch_SkillInfoWnd( skill );
             } else if ( ret == a2 ) {
                 QString skillInfo = QString( "%1 ID = %2" ).arg( skill.skillName() ).arg( skillId );
                 QClipboard *clipboard = QApplication::clipboard();
