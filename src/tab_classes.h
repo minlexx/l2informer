@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QTreeWidgetItem>
+#include <QTimer>
 
 
 namespace Ui {
@@ -26,6 +27,8 @@ public slots:
     void onCbMaxLvlActivated( int index );
     void onChk_hidePassive();
     void onActionSkillInfo( bool checked );
+    void onSkillNameFilterChanged( QString text );
+    void onFilterTimer();
 
 protected:
     void connectSignals();
@@ -37,6 +40,8 @@ protected:
 private:
     Ui::Tab_Classes *ui;
     bool m_hidePassiveSkills;
+    QString m_skillNameFilter;
+    QTimer *m_filterTimer;
 };
 
 #endif // TAB_CLASSES_H

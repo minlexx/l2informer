@@ -120,6 +120,8 @@ void treeViewSkills_addSkill_noEntry( QTreeWidget *tree, const L2Skill& skill ) 
     }
     item->setText( 4, sk_type );
     item->setText( 5, learn_info );
+    // save skill ID as user data for item
+    item->setData( 0, Qt::UserRole, QVariant( skill.skillId() ) );
     //
     tree->addTopLevelItem( item );
 }

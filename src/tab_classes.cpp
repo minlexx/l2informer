@@ -18,6 +18,9 @@
 Tab_Classes::Tab_Classes( QWidget *parent ): QWidget(parent), ui(new Ui::Tab_Classes) {
     ui->setupUi( this );
     m_hidePassiveSkills = false;
+    m_skillNameFilter.clear();
+    m_filterTimer = new QTimer( this );
+    m_filterTimer->setSingleShot( true );
     this->ui->chk_hidePassive->setChecked( false );
 }
 
@@ -61,6 +64,9 @@ void Tab_Classes::connectSignals() {
     QObject::connect( this->ui->cb_minLvl, SIGNAL(activated(int)), this, SLOT(onCbMinLvlActivated(int)) );
     QObject::connect( this->ui->cb_maxLvl, SIGNAL(activated(int)), this, SLOT(onCbMaxLvlActivated(int)) );
     QObject::connect( this->ui->chk_hidePassive, SIGNAL(clicked()), this, SLOT(onChk_hidePassive()) );
+    QObject::connect( this->ui->le_skillNameFilter, SIGNAL(textEdited(QString)),
+                      this, SLOT(onSkillNameFilterChanged(QString)) );
+    QObject::connect( this->m_filterTimer, SIGNAL(timeout()), this, SLOT(onFilterTimer()) );
     // skills tree connections
     //QObject::connect( this->ui->tree_skills, SIGNAL(itemClicked(QTreeWidgetItem*,int)),
     //                  this, SLOT(onTreeSkill_itemClicked(QTreeWidgetItem*,int)) );
@@ -143,6 +149,24 @@ void Tab_Classes::onChk_hidePassive() {
 }
 
 
+void Tab_Classes::onSkillNameFilterChanged( QString text ) {
+    m_skillNameFilter = text;
+    m_filterTimer->start( 1000 );
+}
+
+
+void Tab_Classes::onFilterTimer() {
+    if( m_skillNameFilter.size() > 3 ) {
+        int min_lvl = this->ui->cb_minLvl->currentData( Qt::UserRole ).toInt();
+        int max_lvl = this->ui->cb_maxLvl->currentData( Qt::UserRole ).toInt();
+        int classId = this->getCurrentSelectedTreeClassId();
+        // qDebug( "timer: filter changed: [%s] lv [%d..%d] class [%d]",
+        //     m_skillNameFilter.toUtf8().data(), min_lvl, max_lvl, classId );
+        this->fillClassSkillsForLevel( classId, min_lvl, max_lvl );
+    }
+}
+
+
 int Tab_Classes::getCurrentSelectedTreeClassId() {
     QTreeWidgetItem *curItem = this->ui->tree_classes->currentItem();
     if( !curItem ) return -1; // WTF
@@ -187,7 +211,19 @@ void Tab_Classes::fillClassSkillsForLevel( int classId, int lv_min, int lv_max )
     while( iter.hasNext() ) {
         const SkillTreeEntry& entry = iter.next();
         const L2Skill& skill = skills_db->getSkill( entry.skillId() );
-        if( (this->m_hidePassiveSkills && skill.isPassive()) == false )
+        // default - add skill
+        bool add_skill = true;
+        // hide passive?
+        if( this->m_hidePassiveSkills ) {
+            if( skill.isPassive() )
+                add_skill = false; // do not add passive skills
+        }
+        // name filter
+        if( !m_skillNameFilter.isEmpty() && (m_skillNameFilter.size() > 3) ) {
+            if( !skill.skillName().contains(m_skillNameFilter, Qt::CaseInsensitive) )
+                add_skill = false; // no filter substring in skill name
+        }
+        if( add_skill )
             treeViewSkills_addSkill( this->ui->tree_skills, skill, entry );
     }
 }
