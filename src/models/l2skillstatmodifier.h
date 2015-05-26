@@ -33,15 +33,17 @@ public:
 
     QString val() const { return _val; }
     void setVal( const QString& v ) { this->_val = v; }
+    bool is_tableRef() const;
 
     QString toString() const;
+    QString opToString() const;
 
 protected:
     OP_TYPE _op;
     QString _order;
     QString _stat;
     QString _val;
-    // TODO: table reference? _val may point to skill table
+    // TODO: val may be table reference? _val may point to skill table
     // <add order="0x40" stat="rEvas" val="#ench2rEvas" />
     // <table name="#magicLvl"> 20 24 ...</table>
 };

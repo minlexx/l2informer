@@ -25,13 +25,6 @@ public:
     void setIconName( const QString& iconName );
     void setForgottenScroll( bool fs );
 
-    void addSet( const QString& set_name, const QString& set_value );
-    void addTable( const QString& table_name, const QString& table_value );
-    void addEffect( const L2SkillEffect& eff );
-
-    L2SkillEffect *defaultEffect() { return &_defaultEffect; }
-    const L2SkillEffect *defaultEffect() const { return &_defaultEffect; }
-
     bool isValid() const { return _skillId != -1; }
 
     int      skillId() const { return _skillId; }
@@ -50,10 +43,23 @@ public:
     QString  getSkillType() const;
     int      getMagicLvl() const;
 
-protected:
+public:
+    // sets/tables/effects
+    void addSet( const QString& set_name, const QString& set_value );
+    void addTable( const QString& table_name, const QString& table_value );
+    void addEffect( const L2SkillEffect& eff );
+
+    L2SkillEffect *defaultEffect() { return &_defaultEffect; }
+    const L2SkillEffect *defaultEffect() const { return &_defaultEffect; }
+
+    QMap<QString, L2SkillSet> *getAllSets();
+    QList<L2SkillEffect> *getAllEffects();
+
     bool     isSetTable( const QString& set_name ) const;
     QString  getSetValueS( const QString& set_name, bool issueWarning = true ) const;
     //float   getSetValueF( const QString& set_name, int level ) const;
+    QString  getSetValueForLevelS( const QString& set_name, int level ) const;
+    QString  getTableValueForLevelS( const QString& table_name, int level ) const;
 
 protected:
     int     _skillId;

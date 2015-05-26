@@ -26,6 +26,7 @@ protected:
     void    parseSkillTableDefinition( L2Skill& skill, QXmlStreamReader& xml );
     void    parseSkillSetDefinition( L2Skill& skill, QXmlStreamReader& xml );
     void    parseSkillForDefinition( L2Skill& skill, QXmlStreamReader& xml );
+    void    parseSkillEnchantForDefinition( L2Skill& skill, QXmlStreamReader& xml );
     void    parseSkillEnchantDefinition( L2Skill& skill, QXmlStreamReader& xml );
     void    parseSkillCondDefinition( L2Skill& skill, QXmlStreamReader& xml );
 

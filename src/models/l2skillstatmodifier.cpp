@@ -45,9 +45,30 @@ void L2SkillStatModifier::setOpS( const QString& kind ) {
 }
 
 
+bool L2SkillStatModifier::is_tableRef() const {
+    if( _val.isEmpty() ) return false;
+    QChar c = _val.at( 0 );
+    if( c.unicode() == L'#' )
+        return true;
+    return false;
+}
+
+
 QString L2SkillStatModifier::toString() const {
     QString ret;
+    ret.append( this->opToString() );
+    ret.append( this->_val );
+    ret.append( " " );
+    ret.append( this->_stat );
+    ret.append( " (" );
+    ret.append( this->_order );
+    ret.append( ")" );
+    return ret;
+}
 
+
+QString L2SkillStatModifier::opToString() const {
+    QString ret;
     switch( _op ) {
     case OP_ADD: ret.append( "+" ); break;
     case OP_SUB: ret.append( "-" ); break;
@@ -58,13 +79,5 @@ QString L2SkillStatModifier::toString() const {
     case OP_SHARE: ret.append( "share " ); break;
     default: ret.append( "UNK_OP " ); break;
     }
-
-    ret.append( this->_val );
-    ret.append( " " );
-    ret.append( this->_stat );
-    ret.append( " (" );
-    ret.append( this->_order );
-    ret.append( ")" );
-
     return ret;
 }

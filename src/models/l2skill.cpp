@@ -93,6 +93,15 @@ void L2Skill::addEffect( const L2SkillEffect& eff ) {
 }
 
 
+QMap<QString, L2SkillSet> *L2Skill::getAllSets() {
+    return &(this->_sets);
+}
+
+QList<L2SkillEffect> *L2Skill::getAllEffects() {
+    return &(this->_effects);
+}
+
+
 bool L2Skill::isSetTable( const QString& set_name ) const {
     if( set_name.isEmpty() ) {
         qDebug( "L2Skill::isSetTable(): empty set name given!" );
@@ -102,7 +111,8 @@ bool L2Skill::isSetTable( const QString& set_name ) const {
         const L2SkillSet& set = _sets.value( set_name );
         return set.is_tableRef(); // true way
     } else {
-        qWarning( "L2Skill::isSetTable( %s ): no such set! (skill %s)", set_name.toUtf8().data(), toString().toUtf8().data() );
+        qWarning( "L2Skill::isSetTable( %s ): no such set! (skill %s)",
+                  set_name.toUtf8().data(), toString().toUtf8().data() );
         return false;
     }
 }
@@ -115,7 +125,62 @@ QString L2Skill::getSetValueS( const QString& set_name, bool issueWarning ) cons
         return set.value();
     } else {
         if( issueWarning )
-            qWarning( "L2Skill::getSetValueS( \"%s\" ): no such set! (skill %s)", set_name.toUtf8().data(), toString().toUtf8().data() );
+            qWarning( "L2Skill::getSetValueS( \"%s\" ): no such set! (skill %s)",
+                      set_name.toUtf8().data(), toString().toUtf8().data() );
+    }
+    return ret;
+}
+
+
+QString L2Skill::getSetValueForLevelS( const QString& set_name, int level ) const {
+    QString ret;
+    if(_sets.contains( set_name )) {
+        const L2SkillSet& set = _sets.value( set_name );
+        if( set.is_tableRef() ) {
+            ret = this->getTableValueForLevelS( set.value(), level );
+        } else {
+            qWarning( "L2Skill::getSetValueForLevelS( \"%s\", %d ): set is not a table! (skill %s)",
+                      set_name.toUtf8().data(),
+                      level,
+                      toString().toUtf8().data() );
+        }
+    } else {
+        qWarning( "L2Skill::getSetValueForLevelS( \"%s\", %d ): no such set! (skill %s)",
+                  set_name.toUtf8().data(),
+                  level,
+                  toString().toUtf8().data() );
+    }
+    return ret;
+}
+
+
+QString L2Skill::getTableValueForLevelS( const QString& table_name, int level ) const {
+    QString ret;
+    if( _tables.contains(table_name) ) {
+        const L2SkillTable &tbl = _tables.value( table_name );
+        QStringList values = tbl.toListString();
+        //
+        //qDebug( "L2Skill::getTableValueForLevelS( \"%s\", %d ): got values (%d) : ",
+        //        table_name.toUtf8().data(), level, values.size() );
+        //QStringListIterator siter(values);
+        //while( siter.hasNext() ) {
+        //    const QString &v1 = siter.next();
+        //    qDebug( "%s, ", v1.toUtf8().data() );
+        //}
+        //
+        if( (level >= 0) && (level < values.size()) ) {
+            ret = values.value(level);
+        } else {
+            qWarning( "L2Skill::getTableValueForLevelS( \"%s\", %d ): level index out of bounds! (skill %s)",
+                      table_name.toUtf8().data(),
+                      level,
+                      toString().toUtf8().data() );
+        }
+    } else {
+        qWarning( "L2Skill::getTableValueForLevelS( \"%s\", %d ): no such table! (skill %s)",
+                  table_name.toUtf8().data(),
+                  level,
+                  toString().toUtf8().data() );
     }
     return ret;
 }

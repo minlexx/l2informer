@@ -40,3 +40,12 @@ void L2SkillTable::setName( const QString& name ) {
 void L2SkillTable::setValue( const QString& value ) {
     _value = value;
 }
+
+
+QStringList L2SkillTable::toListString() const {
+    QStringList ret;
+    if( !_value.isEmpty() ) {
+        ret = _value.split( QChar(' '), QString::SkipEmptyParts, Qt::CaseInsensitive );
+    }
+    return ret;
+}

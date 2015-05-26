@@ -3,6 +3,7 @@
 
 #include <QString>
 #include <QList>
+#include <QStringList>
 
 
 class L2SkillTable {
@@ -21,6 +22,7 @@ public:
     QString name() const { return _name; }
     QString value() const { return _value; }
 
+    QStringList toListString() const;
     // TODO:
     QList<int> toListInt() const;
     QList<float> toListFloat() const;

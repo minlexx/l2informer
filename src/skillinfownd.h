@@ -1,7 +1,9 @@
 #ifndef SKILLINFOWND_H
 #define SKILLINFOWND_H
 
+#include <QList>
 #include <QWidget>
+#include "skillinfopane.h"
 #include "models/l2skill.h"
 
 namespace Ui {
@@ -16,7 +18,13 @@ public:
     ~SkillInfoWnd();
 
 protected:
+    void fillTopInfo();
+    void fillLevelPanels();
+    void add_skillXmlTab();
+
+protected:
     L2Skill m_skill;
+    QList<SkillInfoPane *> m_panels;
 
 private:
     Ui::SkillInfoWnd *ui;

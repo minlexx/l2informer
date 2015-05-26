@@ -11,6 +11,8 @@ public:
     L2SkillEffect( const L2SkillEffect& other );
     const L2SkillEffect& operator=( const L2SkillEffect& other );
 
+    bool isValid() const;
+
     QString effectName() const { return _effectName; }
     void setEffectName( const QString& name );
 
@@ -26,7 +28,7 @@ public:
     int effectVal() const { return _effectVal; }
     void setEffectVal( int ev );
 
-    QString unsingKind() const { return _usingKind; }
+    QString usingKind() const { return _usingKind; }
     void setUsingKind( const QString& kind );
 
     bool self() const { return _self; }
@@ -68,7 +70,7 @@ public:
     void addStatMod( L2SkillStatModifier mod );
     const QList<L2SkillStatModifier> statMods() const { return _mods; }
 
-    QString toString() const;
+    QString toString( bool appendMods = false ) const;
 
 protected:
     QString _effectName;

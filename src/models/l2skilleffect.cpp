@@ -54,6 +54,15 @@ const L2SkillEffect& L2SkillEffect::operator=( const L2SkillEffect& other ) {
 }
 
 
+bool L2SkillEffect::isValid() const {
+    if( !_effectName.isEmpty() )
+        return true;
+    if( _mods.size() > 0 )
+        return true;
+    return false;
+}
+
+
 void L2SkillEffect::setEffectName( const QString& name ) {
     _effectName = name;
 }
@@ -89,7 +98,7 @@ void L2SkillEffect::addStatMod( L2SkillStatModifier mod ) {
 }
 
 
-QString L2SkillEffect::toString() const {
+QString L2SkillEffect::toString( bool appendMods ) const {
     QString ret;
 
     if( _self )
@@ -102,13 +111,16 @@ QString L2SkillEffect::toString() const {
         ret.append( QString(" (%1s)").arg(_abnormalTime) );
 
     if( !_abnormalType.isEmpty() )
-        ret.append( QString(" %1").arg(_abnormalType) );
+        ret.append( QString(" type:%1").arg(_abnormalType) );
 
     if( !_effectCount.isEmpty() )
         ret.append( QString(" cnt:%1").arg(_effectCount) );
 
     if( !_effectPower.isEmpty() )
-        ret.append( QString(" power %1").arg(_effectPower) );
+        ret.append( QString(" power:%1").arg(_effectPower) );
+
+    if( _effectVal )
+        ret.append( QString(" val:%1").arg(_effectVal) );
 
     if( !_chanceType.isEmpty() ) {
         ret.append( " " );
@@ -124,14 +136,17 @@ QString L2SkillEffect::toString() const {
     if( !_usingKind.isEmpty() )
         ret.append( QString(" [with %1]").arg(_usingKind) );
 
-    if( _mods.size() > 0 ) {
-        ret.append( ": " );
-        QListIterator<L2SkillStatModifier> iter( _mods );
-        while( iter.hasNext() ) {
-            const L2SkillStatModifier& mod1 = iter.next();
-            ret.append( mod1.toString() );
-            if( iter.hasNext() )
-                ret.append( ", " );
+    if( appendMods ) {
+        // append stat modifiers
+        if( _mods.size() > 0 ) {
+            ret.append( ": " );
+            QListIterator<L2SkillStatModifier> iter( _mods );
+            while( iter.hasNext() ) {
+                const L2SkillStatModifier& mod1 = iter.next();
+                ret.append( mod1.toString() );
+                if( iter.hasNext() )
+                    ret.append( ", " );
+            }
         }
     }
 

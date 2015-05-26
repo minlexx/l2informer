@@ -275,7 +275,11 @@ L2Skill SkillsDB::parseSkillDefinition( QXmlStreamReader& xml ) {
                        (xml.name() == "enchant6for") ||
                        (xml.name() == "enchant7for") ||
                        (xml.name() == "enchant8for") ) {
-                this->parseSkillForDefinition( skill, xml );
+                // separate effect parsing from enchanted for parsing
+                if( xml.name() == "for" )
+                    this->parseSkillForDefinition( skill, xml );
+                else
+                    this->parseSkillEnchantForDefinition( skill, xml );
             } else { // unknown element?
                 throw UnparsedSkillParameterException( skillId, xml );
             }
@@ -441,6 +445,21 @@ void SkillsDB::parseSkillForDefinition( L2Skill& skill, QXmlStreamReader& xml ) 
                 throw UnparsedSkillForParameterException( skill.skillId(), xml );
             }
         }
+        xml.readNext();
+    }
+}
+
+
+void SkillsDB::parseSkillEnchantForDefinition( L2Skill& skill, QXmlStreamReader& xml ) {
+    Q_UNUSED(skill);
+    QString kind = xml.name().toString(); // save current XML block token
+    //qDebug( "parsing 'enchantXfor' kind = %s", kind.toUtf8().data() );
+    // goto next
+    xml.readNext();
+    while( !((xml.name() == kind) && (xml.tokenType() == QXmlStreamReader::EndElement)) ) {
+        //qDebug( "    token name=[%s], type=[%s]", xml.name().toUtf8().data(), xml.tokenString().toUtf8().data() );
+        // skip
+        // TODO: parse enchants
         xml.readNext();
     }
 }
